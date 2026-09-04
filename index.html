@@ -265,6 +265,12 @@
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             padding-bottom: 15px;
+            scrollbar-width: none;
+            scroll-behavior: smooth;
+        }
+
+        .carousel-wrapper::-webkit-scrollbar {
+            display: none;
         }
 
         .slide-card {
@@ -322,7 +328,6 @@
             font-weight: 500;
         }
 
-        /* MOBILE RESPONSIVE TWEAKS */
         @media (max-width: 768px) {
             .header-nav-container {
                 flex-direction: column;
@@ -388,7 +393,7 @@
     <section class="hero-banner-section">
         <div class="hero-carousel-wrapper" id="heroSlider">
             
-            <div class="hero-slide" style="/* background-image: url('your-image-1.jpg'); */">
+            <div class="hero-slide">
                 <div class="hero-slide-content">
                     <h2>Festival Of Diamonds & Gold</h2>
                     <p>Designs crafted for pure gold to shine the brightest</p>
@@ -396,7 +401,7 @@
                 </div>
             </div>
 
-            <div class="hero-slide" style="/* background-image: url('your-image-2.jpg'); */">
+            <div class="hero-slide">
                 <div class="hero-slide-content">
                     <h2>Royal Heritage Collection</h2>
                     <p>Bespoke 22K heirlooms tailored for modern royalty</p>
@@ -404,7 +409,7 @@
                 </div>
             </div>
 
-            <div class="hero-slide" style="/* background-image: url('your-image-3.jpg'); */">
+            <div class="hero-slide">
                 <div class="hero-slide-content">
                     <h2>Solstice Investment Bullion</h2>
                     <p>24K verified purity bars and certified coins</p>
@@ -412,7 +417,7 @@
                 </div>
             </div>
 
-            <div class="hero-slide" style="/* background-image: url('your-image-4.jpg'); */">
+            <div class="hero-slide">
                 <div class="hero-slide-content">
                     <h2>Exclusive Bridal Heirlooms</h2>
                     <p>Hand-engraved legacy gold made for high moments</p>
@@ -442,7 +447,7 @@
     <!-- 5. OFFERS & LATEST COLLECTION -->
     <section class="slider-section">
         <h2 class="section-title">Offers & Latest Collection</h2>
-        <div class="carousel-wrapper">
+        <div class="carousel-wrapper" id="cardSlider">
             
             <div class="slide-card">
                 <div class="img-mockup slide-img">[ OFFER 1 ]<br><br>Seasonal Banner</div>
@@ -492,40 +497,84 @@
         <p>© 2026 Dia Oro. All rights reserved.</p>
     </footer>
 
-    <!-- JS FOR SLIDER AUTOMATION -->
     <script>
-        const slider = document.getElementById('heroSlider');
+        // --- 1. HERO SLIDER LOGIC ---
+        const heroSlider = document.getElementById('heroSlider');
+        const slides = heroSlider.querySelectorAll('.hero-slide');
         const dots = document.querySelectorAll('.dot');
-        let currentIndex = 0;
-        const totalSlides = dots.length;
+        let heroIndex = 0;
+        let heroTimer;
 
         function updateDots(index) {
             dots.forEach((dot, i) => {
-                if(i === index) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
-                }
+                dot.classList.toggle('active', i === index);
             });
         }
 
         function goToSlide(index) {
-            currentIndex = index;
-            const slideWidth = slider.querySelector('.hero-slide').offsetWidth + 15;
-            slider.scrollTo({
-                left: slideWidth * index,
-                behavior: 'smooth'
-            });
-            updateDots(currentIndex);
+            heroIndex = index;
+            const targetSlide = slides[index];
+            if (targetSlide) {
+                heroSlider.scrollTo({
+                    left: targetSlide.offsetLeft - heroSlider.offsetLeft,
+                    behavior: 'smooth'
+                });
+            }
+            updateDots(heroIndex);
         }
 
-        let autoSlide = setInterval(() => {
-            currentIndex = (currentIndex + 1) % totalSlides;
-            goToSlide(currentIndex);
-        }, 4000);
+        function startHeroAutoSlide() {
+            heroTimer = setInterval(() => {
+                heroIndex = (heroIndex + 1) % slides.length;
+                goToSlide(heroIndex);
+            }, 3500);
+        }
 
-        slider.addEventListener('touchstart', () => clearInterval(autoSlide));
-        slider.addEventListener('mouseenter', () => clearInterval(autoSlide));
+        // Sync active pill indicator when manually scrolling/swiping hero carousel
+        heroSlider.addEventListener('scroll', () => {
+            const scrollPos = heroSlider.scrollLeft;
+            slides.forEach((slide, idx) => {
+                const slideLeft = slide.offsetLeft - heroSlider.offsetLeft;
+                if (Math.abs(scrollPos - slideLeft) < slide.offsetWidth / 2) {
+                    heroIndex = idx;
+                    updateDots(heroIndex);
+                }
+            });
+        });
+
+        // Pause hero slider on hover/touch
+        heroSlider.addEventListener('mouseenter', () => clearInterval(heroTimer));
+        heroSlider.addEventListener('mouseleave', startHeroAutoSlide);
+        heroSlider.addEventListener('touchstart', () => clearInterval(heroTimer));
+        heroSlider.addEventListener('touchend', startHeroAutoSlide);
+
+        startHeroAutoSlide();
+
+        // --- 2. LOWER CARD SLIDER LOGIC ---
+        const cardSlider = document.getElementById('cardSlider');
+        let cardTimer;
+
+        function startCardAutoSlide() {
+            cardTimer = setInterval(() => {
+                const card = cardSlider.querySelector('.slide-card');
+                const cardWidth = card.offsetWidth + 15; // Width + gap
+                const maxScrollLeft = cardSlider.scrollWidth - cardSlider.clientWidth;
+
+                if (cardSlider.scrollLeft + cardWidth >= maxScrollLeft) {
+                    cardSlider.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    cardSlider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+                }
+            }, 3000);
+        }
+
+        // Pause lower card slider on hover/touch
+        cardSlider.addEventListener('mouseenter', () => clearInterval(cardTimer));
+        cardSlider.addEventListener('mouseleave', startCardAutoSlide);
+        cardSlider.addEventListener('touchstart', () => clearInterval(cardTimer));
+        cardSlider.addEventListener('touchend', startCardAutoSlide);
+
+        startCardAutoSlide();
     </script>
 </body>
 </html>
